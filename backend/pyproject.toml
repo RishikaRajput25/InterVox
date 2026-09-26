@@ -1,0 +1,26 @@
+
+[project]
+name = "backend"
+version = "0.1.0"
+description = "AI Research Assistant backend"
+requires-python = ">=3.11"
+dependencies = [
+    "chromadb>=1.5.9",
+    "fastapi[standard]>=0.141.1",
+    "faster-whisper>=1.2.1",
+    "google-genai>=2.25.0",
+    "pydantic-settings>=2.11.0",
+    "pymupdf>=1.28.2",
+    "python-docx>=1.2.0",
+    "sentence-transformers>=6.1.0",
+]
+
+[project.scripts]
+dev = "app.main:dev"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
