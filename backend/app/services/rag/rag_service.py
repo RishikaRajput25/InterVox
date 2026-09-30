@@ -1,4 +1,6 @@
 
+# from collections.abc import Iterator
+
 # from app.services.llm.gemini import gemini_service
 # from app.services.rag.context_builder import build_context
 # from app.services.retrieval.hybrid_search import search_hybrid
@@ -21,13 +23,64 @@
 # """
 
 
+# def build_unique_sources(
+#     results: list[dict],
+# ) -> list[dict]:
+#     """
+#     Convert chunk-level retrieval results into
+#     unique document/page citations.
+#     """
+
+#     unique_sources = []
+#     seen = set()
+
+#     for result in results:
+
+#         metadata = result.get(
+#             "metadata",
+#             {}
+#         )
+
+#         filename = metadata.get(
+#             "filename"
+#         )
+
+#         page_number = metadata.get(
+#             "page_number"
+#         )
+
+#         key = (
+#             filename,
+#             page_number,
+#         )
+
+#         if key in seen:
+#             continue
+
+#         seen.add(key)
+
+#         unique_sources.append({
+#             "filename": filename,
+#             "page_number": page_number,
+#         })
+
+#     return unique_sources
+
+
 # class RAGService:
 
-#     def ask(
+#     def _retrieve(
 #         self,
 #         query: str,
 #         top_k: int = 5,
-#     ) -> dict:
+#     ) -> tuple[list[dict], str]:
+#         """
+#         Retrieve and rerank relevant document chunks.
+
+#         Returns:
+#             reranked_results
+#             context
+#         """
 
 #         if not query.strip():
 #             raise ValueError(
@@ -44,13 +97,7 @@
 #         )
 
 #         if not hybrid_results:
-#             return {
-#                 "answer": (
-#                     "I could not find relevant information "
-#                     "in the available documents."
-#                 ),
-#                 "sources": [],
-#             }
+#             return [], ""
 
 #         # ---------------------------------------------
 #         # 2. Cross-encoder reranking
@@ -63,13 +110,7 @@
 #         )
 
 #         if not reranked_results:
-#             return {
-#                 "answer": (
-#                     "I could not find relevant information "
-#                     "in the available documents."
-#                 ),
-#                 "sources": [],
-#             }
+#             return [], ""
 
 #         # ---------------------------------------------
 #         # 3. Build context
@@ -79,11 +120,21 @@
 #             reranked_results
 #         )
 
-#         # ---------------------------------------------
-#         # 4. Build grounded prompt
-#         # ---------------------------------------------
+#         if not context:
+#             return [], ""
 
-#         prompt = f"""
+#         return reranked_results, context
+
+#     def _build_prompt(
+#         self,
+#         query: str,
+#         context: str,
+#     ) -> str:
+#         """
+#         Build the grounded Gemini prompt.
+#         """
+
+#         return f"""
 # {RAG_SYSTEM_INSTRUCTION}
 
 # Retrieved document context:
@@ -96,8 +147,41 @@
 # Answer:
 # """
 
+#     def ask(
+#         self,
+#         query: str,
+#         top_k: int = 5,
+#     ) -> dict:
+
 #         # ---------------------------------------------
-#         # 5. Generate answer
+#         # 1. Retrieve relevant documents
+#         # ---------------------------------------------
+
+#         reranked_results, context = self._retrieve(
+#             query=query,
+#             top_k=top_k,
+#         )
+
+#         if not reranked_results or not context:
+#             return {
+#                 "answer": (
+#                     "I could not find relevant information "
+#                     "in the available documents."
+#                 ),
+#                 "sources": [],
+#             }
+
+#         # ---------------------------------------------
+#         # 2. Build grounded prompt
+#         # ---------------------------------------------
+
+#         prompt = self._build_prompt(
+#             query=query,
+#             context=context,
+#         )
+
+#         # ---------------------------------------------
+#         # 3. Generate complete answer
 #         # ---------------------------------------------
 
 #         answer = gemini_service.generate(
@@ -105,40 +189,71 @@
 #         )
 
 #         # ---------------------------------------------
-#         # 6. Prepare sources
+#         # 4. Deduplicate citations
 #         # ---------------------------------------------
 
-#         sources = []
-
-#         for result in reranked_results:
-
-#             metadata = result.get(
-#                 "metadata",
-#                 {}
-#             )
-
-#             sources.append({
-#                 "filename": metadata.get(
-#                     "filename"
-#                 ),
-#                 "page_number": metadata.get(
-#                     "page_number"
-#                 ),
-#                 "chunk_id": result.get(
-#                     "chunk_id"
-#                 ),
-#                 "rerank_score": result.get(
-#                     "rerank_score"
-#                 ),
-#             })
+#         sources = build_unique_sources(
+#             reranked_results
+#         )
 
 #         return {
 #             "answer": answer.strip(),
 #             "sources": sources,
 #         }
 
+#     def ask_stream(
+#         self,
+#         query: str,
+#         top_k: int = 5,
+#     ) -> Iterator[str]:
+#         """
+#         Stream the grounded Gemini answer
+#         chunk by chunk.
+
+#         This method is intended for the
+#         low-latency voice pipeline.
+#         """
+
+#         # ---------------------------------------------
+#         # 1. Retrieve relevant documents
+#         # ---------------------------------------------
+
+#         reranked_results, context = self._retrieve(
+#             query=query,
+#             top_k=top_k,
+#         )
+
+#         if not reranked_results or not context:
+#             yield (
+#                 "I could not find relevant information "
+#                 "in the available documents."
+#             )
+#             return
+
+#         # ---------------------------------------------
+#         # 2. Build grounded prompt
+#         # ---------------------------------------------
+
+#         prompt = self._build_prompt(
+#             query=query,
+#             context=context,
+#         )
+
+#         # ---------------------------------------------
+#         # 3. Stream Gemini response
+#         # ---------------------------------------------
+
+#         for chunk in gemini_service.stream(
+#             prompt
+#         ):
+#             if chunk:
+#                 yield chunk
+
 
 # rag_service = RAGService()
+
+
+from collections.abc import AsyncIterator, Iterator
 
 from app.services.llm.gemini import gemini_service
 from app.services.rag.context_builder import build_context
@@ -208,11 +323,18 @@ def build_unique_sources(
 
 class RAGService:
 
-    def ask(
+    def _retrieve(
         self,
         query: str,
         top_k: int = 5,
-    ) -> dict:
+    ) -> tuple[list[dict], str]:
+        """
+        Retrieve and rerank relevant document chunks.
+
+        Returns:
+            reranked_results
+            context
+        """
 
         if not query.strip():
             raise ValueError(
@@ -229,13 +351,7 @@ class RAGService:
         )
 
         if not hybrid_results:
-            return {
-                "answer": (
-                    "I could not find relevant information "
-                    "in the available documents."
-                ),
-                "sources": [],
-            }
+            return [], ""
 
         # ---------------------------------------------
         # 2. Cross-encoder reranking
@@ -248,13 +364,7 @@ class RAGService:
         )
 
         if not reranked_results:
-            return {
-                "answer": (
-                    "I could not find relevant information "
-                    "in the available documents."
-                ),
-                "sources": [],
-            }
+            return [], ""
 
         # ---------------------------------------------
         # 3. Build context
@@ -265,19 +375,20 @@ class RAGService:
         )
 
         if not context:
-            return {
-                "answer": (
-                    "I could not find relevant information "
-                    "in the available documents."
-                ),
-                "sources": [],
-            }
+            return [], ""
 
-        # ---------------------------------------------
-        # 4. Build grounded prompt
-        # ---------------------------------------------
+        return reranked_results, context
 
-        prompt = f"""
+    def _build_prompt(
+        self,
+        query: str,
+        context: str,
+    ) -> str:
+        """
+        Build the grounded Gemini prompt.
+        """
+
+        return f"""
 {RAG_SYSTEM_INSTRUCTION}
 
 Retrieved document context:
@@ -290,8 +401,46 @@ User question:
 Answer:
 """
 
+    def ask(
+        self,
+        query: str,
+        top_k: int = 5,
+    ) -> dict:
+        """
+        Generate a complete RAG answer.
+
+        This is the normal synchronous RAG method.
+        """
+
         # ---------------------------------------------
-        # 5. Generate answer
+        # 1. Retrieve relevant documents
+        # ---------------------------------------------
+
+        reranked_results, context = self._retrieve(
+            query=query,
+            top_k=top_k,
+        )
+
+        if not reranked_results or not context:
+            return {
+                "answer": (
+                    "I could not find relevant information "
+                    "in the available documents."
+                ),
+                "sources": [],
+            }
+
+        # ---------------------------------------------
+        # 2. Build grounded prompt
+        # ---------------------------------------------
+
+        prompt = self._build_prompt(
+            query=query,
+            context=context,
+        )
+
+        # ---------------------------------------------
+        # 3. Generate complete answer
         # ---------------------------------------------
 
         answer = gemini_service.generate(
@@ -299,7 +448,7 @@ Answer:
         )
 
         # ---------------------------------------------
-        # 6. Deduplicate citations
+        # 4. Deduplicate citations
         # ---------------------------------------------
 
         sources = build_unique_sources(
@@ -311,5 +460,102 @@ Answer:
             "sources": sources,
         }
 
+    def ask_stream(
+        self,
+        query: str,
+        top_k: int = 5,
+    ) -> Iterator[str]:
+        """
+        Stream the grounded Gemini answer
+        synchronously.
+
+        This method is kept for the existing
+        synchronous streaming pipeline.
+        """
+
+        # ---------------------------------------------
+        # 1. Retrieve relevant documents
+        # ---------------------------------------------
+
+        reranked_results, context = self._retrieve(
+            query=query,
+            top_k=top_k,
+        )
+
+        if not reranked_results or not context:
+            yield (
+                "I could not find relevant information "
+                "in the available documents."
+            )
+            return
+
+        # ---------------------------------------------
+        # 2. Build grounded prompt
+        # ---------------------------------------------
+
+        prompt = self._build_prompt(
+            query=query,
+            context=context,
+        )
+
+        # ---------------------------------------------
+        # 3. Stream Gemini response
+        # ---------------------------------------------
+
+        for chunk in gemini_service.stream(
+            prompt
+        ):
+            if chunk:
+                yield chunk
+
+    async def ask_stream_async(
+        self,
+        query: str,
+        top_k: int = 5,
+    ) -> AsyncIterator[str]:
+        """
+        Stream the grounded Gemini response
+        asynchronously.
+
+        This method is intended for the
+        interruptible voice pipeline.
+        """
+
+        # ---------------------------------------------
+        # 1. Retrieve relevant documents
+        # ---------------------------------------------
+
+        reranked_results, context = self._retrieve(
+            query=query,
+            top_k=top_k,
+        )
+
+        if not reranked_results or not context:
+            yield (
+                "I could not find relevant information "
+                "in the available documents."
+            )
+            return
+
+        # ---------------------------------------------
+        # 2. Build grounded prompt
+        # ---------------------------------------------
+
+        prompt = self._build_prompt(
+            query=query,
+            context=context,
+        )
+
+        # ---------------------------------------------
+        # 3. Stream Gemini asynchronously
+        # ---------------------------------------------
+
+        async for chunk in gemini_service.stream_async(
+            prompt
+        ):
+            if chunk:
+                yield chunk
+
 
 rag_service = RAGService()
+

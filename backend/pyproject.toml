@@ -6,13 +6,17 @@ description = "AI Research Assistant backend"
 requires-python = ">=3.11"
 dependencies = [
     "chromadb>=1.5.9",
+    "edge-tts>=7.2.8",
     "fastapi[standard]>=0.141.1",
     "faster-whisper>=1.2.1",
     "google-genai>=2.25.0",
+    "groq>=1.7.0",
     "pydantic-settings>=2.11.0",
     "pymupdf>=1.28.2",
     "python-docx>=1.2.0",
     "sentence-transformers>=6.1.0",
+    "silero-vad>=6.2.3",
+    "torchcodec>=0.16.0",
 ]
 
 [project.scripts]
