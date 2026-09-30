@@ -1,113 +1,759 @@
 @import "tailwindcss";
 
-/* :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/* ========================================
+   GLOBAL
+   ======================================== */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
+html,
+body,
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 body {
-  margin: 0;
+  overflow-x: hidden;
+  background: #0d1422;
+  color: white;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+
+/* ========================================
+   INTERVOX SHELL
+   ======================================== */
+
+.intervox-shell {
+  position: relative;
+  min-height: 100vh;
+  background:
+    linear-gradient(
+      135deg,
+      #0d1422 0%,
+      #0b1220 45%,
+      #0d1525 100%
+    );
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+
+/* ========================================
+   BACKGROUND
+   ======================================== */
+
+.intervox-background {
+  position: fixed;
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle at 50% 38%,
+      rgba(79, 70, 229, 0.10),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 75% 25%,
+      rgba(37, 99, 235, 0.07),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 15% 80%,
+      rgba(99, 102, 241, 0.045),
+      transparent 25%
+    );
+
+  z-index: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
+
+/* ========================================
+   LOGO
+   ======================================== */
+
+.intervox-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+
+  width: 27px;
+  height: 27px;
+}
+
+.intervox-logo span {
+  width: 3px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(
+    to bottom,
+    #a78bfa,
+    #6366f1
+  );
+
+  box-shadow:
+    0 0 8px rgba(99, 102, 241, 0.45);
+}
+
+.intervox-logo span:nth-child(1) {
+  height: 10px;
+}
+
+.intervox-logo span:nth-child(2) {
+  height: 20px;
+}
+
+.intervox-logo span:nth-child(3) {
+  height: 14px;
+}
+
+.intervox-logo span:nth-child(4) {
+  height: 8px;
+}
+
+
+/* ========================================
+   NAVIGATION
+   ======================================== */
+
+.intervox-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  width: 100%;
+
+  padding: 10px 12px;
+
+  border-radius: 10px;
+
+  color: #94a3b8;
+
+  font-size: 13px;
+
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease;
+
+  border: 1px solid transparent;
+}
+
+.intervox-nav-item:hover {
+  color: #e2e8f0;
+
+  background: rgba(255, 255, 255, 0.035);
+
+  border-color: rgba(255, 255, 255, 0.045);
+}
+
+.intervox-nav-active {
+  color: #e0e7ff;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(79, 70, 229, 0.24),
+      rgba(59, 130, 246, 0.10)
+    );
+
+  border-color: rgba(99, 102, 241, 0.22);
+
+  box-shadow:
+    inset 0 0 18px rgba(79, 70, 229, 0.05);
+}
+
+
+/* ========================================
+   TOP STATUS
+   ======================================== */
+
+.intervox-status {
   display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+  align-items: center;
+  gap: 8px;
+
+  padding: 9px 14px;
+
+  border: 1px solid rgba(148, 163, 184, 0.13);
+
+  border-radius: 999px;
+
+  background: rgba(15, 23, 42, 0.45);
+
+  color: #94a3b8;
+
+  font-size: 12px;
+
+  backdrop-filter: blur(12px);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-} */
+.intervox-status-dot {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: #818cf8;
+
+  box-shadow:
+    0 0 10px rgba(129, 140, 248, 0.75);
+}
+
+
+/* ========================================
+   EYEBROW
+   ======================================== */
+
+.intervox-eyebrow {
+  color: #818cf8;
+
+  font-size: 11px;
+  font-weight: 500;
+
+  letter-spacing: 0.28em;
+}
+
+
+/* ========================================
+   HEADING
+   ======================================== */
+
+.intervox-heading-accent {
+  color: #a5b4fc;
+
+  text-shadow:
+    0 0 30px rgba(129, 140, 248, 0.15);
+}
+
+
+/* ========================================
+   PRIMARY BUTTON
+   ======================================== */
+
+.intervox-primary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 12px 18px;
+
+  border-radius: 12px;
+
+  border: 1px solid rgba(129, 140, 248, 0.28);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(79, 70, 229, 0.38),
+      rgba(37, 99, 235, 0.22)
+    );
+
+  color: #eef2ff;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  box-shadow:
+    0 10px 30px rgba(30, 41, 59, 0.25),
+    inset 0 1px rgba(255, 255, 255, 0.06);
+
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.intervox-primary-button:hover {
+  transform: translateY(-1px);
+
+  border-color: rgba(129, 140, 248, 0.48);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(79, 70, 229, 0.48),
+      rgba(37, 99, 235, 0.30)
+    );
+
+  box-shadow:
+    0 14px 35px rgba(30, 41, 59, 0.35),
+    0 0 25px rgba(79, 70, 229, 0.12);
+}
+
+
+/* ========================================
+   MINI BADGES
+   ======================================== */
+
+.intervox-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 7px 10px;
+
+  border-radius: 999px;
+
+  border: 1px solid rgba(148, 163, 184, 0.10);
+
+  background: rgba(15, 23, 42, 0.42);
+
+  color: #64748b;
+
+  font-size: 11px;
+
+  backdrop-filter: blur(10px);
+}
+
+
+/* ========================================
+   BACK BUTTON
+   ======================================== */
+
+.intervox-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #64748b;
+
+  font-size: 12px;
+
+  transition: color 180ms ease;
+}
+
+.intervox-back-button:hover {
+  color: #cbd5e1;
+}
+
+
+/* ========================================
+   DOCUMENT UPLOAD PANEL
+   ======================================== */
+
+.intervox-upload-panel {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 42px 24px;
+
+  border-radius: 24px;
+
+  border: 1px solid rgba(129, 140, 248, 0.13);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20, 32, 55, 0.72),
+      rgba(12, 20, 36, 0.72)
+    );
+
+  box-shadow:
+    0 25px 70px rgba(2, 6, 23, 0.35),
+    inset 0 1px rgba(255, 255, 255, 0.035);
+
+  backdrop-filter: blur(18px);
+}
+
+.intervox-upload-panel::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  border-radius: inherit;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(99, 102, 241, 0.09),
+      transparent 35%
+    );
+}
+
+.intervox-upload-icon {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 52px;
+  height: 52px;
+
+  margin-bottom: 24px;
+
+  border-radius: 15px;
+
+  color: #a5b4fc;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(79, 70, 229, 0.28),
+      rgba(37, 99, 235, 0.12)
+    );
+
+  border: 1px solid rgba(129, 140, 248, 0.22);
+
+  box-shadow:
+    0 0 30px rgba(79, 70, 229, 0.10);
+}
+
+
+/* ========================================
+   VOICE ORB
+   ======================================== */
+
+.voice-orb {
+  --orb-size: 240px;
+
+  position: relative;
+
+  width: var(--orb-size);
+  height: var(--orb-size);
+
+  flex: 0 0 var(--orb-size);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  isolation: isolate;
+}
+
+.voice-orb-glow {
+  position: absolute;
+
+  width: 175px;
+  height: 175px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(99, 102, 241, 0.48),
+      rgba(59, 130, 246, 0.17),
+      transparent 70%
+    );
+
+  filter: blur(25px);
+
+  pointer-events: none;
+
+  animation: orbGlow 4s ease-in-out infinite;
+}
+
+.voice-orb-ring {
+  position: absolute;
+
+  width: 198px;
+  height: 198px;
+
+  top: 50%;
+  left: 50%;
+
+  margin-top: -99px;
+  margin-left: -99px;
+
+  border-radius: 50%;
+
+  border: 1px solid rgba(99, 102, 241, 0.20);
+
+  pointer-events: none;
+
+  animation: orbRing 6s linear infinite;
+}
+
+.voice-orb-ring-2 {
+  width: 160px;
+  height: 160px;
+
+  margin-top: -80px;
+  margin-left: -80px;
+
+  border-color: rgba(59, 130, 246, 0.27);
+
+  animation-duration: 5s;
+  animation-direction: reverse;
+}
+
+.voice-orb-ring-3 {
+  width: 122px;
+  height: 122px;
+
+  margin-top: -61px;
+  margin-left: -61px;
+
+  border-color: rgba(139, 92, 246, 0.28);
+
+  animation-duration: 4s;
+}
+
+.voice-orb-core {
+  position: relative;
+
+  width: 128px;
+  height: 128px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  border: 1px solid rgba(129, 140, 248, 0.50);
+
+  background:
+    radial-gradient(
+      circle at 30% 22%,
+      rgba(96, 165, 250, 0.42),
+      rgba(79, 70, 229, 0.38),
+      rgba(17, 24, 39, 0.97)
+    );
+
+  box-shadow:
+    0 0 28px rgba(79, 70, 229, 0.42),
+    0 0 60px rgba(59, 130, 246, 0.10),
+    inset 0 0 35px rgba(99, 102, 241, 0.16);
+
+  z-index: 2;
+
+  transition:
+    transform 500ms ease,
+    box-shadow 500ms ease;
+}
+
+.voice-orb-listening .voice-orb-core {
+  transform: scale(1.08);
+
+  box-shadow:
+    0 0 40px rgba(59, 130, 246, 0.60),
+    0 0 85px rgba(79, 70, 229, 0.24),
+    inset 0 0 35px rgba(129, 140, 248, 0.25);
+}
+
+.voice-orb-speaking .voice-orb-core {
+  transform: scale(1.1);
+
+  box-shadow:
+    0 0 45px rgba(139, 92, 246, 0.68),
+    0 0 95px rgba(59, 130, 246, 0.32),
+    inset 0 0 40px rgba(167, 139, 250, 0.30);
+
+  animation: speakingPulse 1.2s ease-in-out infinite;
+}
+
+
+/* ========================================
+   WAVEFORM
+   ======================================== */
+
+.voice-wave {
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+}
+
+.voice-wave span {
+  width: 4px;
+  height: 16px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(
+    to bottom,
+    #a78bfa,
+    #60a5fa
+  );
+
+  box-shadow:
+    0 0 8px rgba(129, 140, 248, 0.25);
+
+  animation: voiceWave 0.9s ease-in-out infinite;
+}
+
+.voice-wave span:nth-child(1) {
+  animation-delay: -0.45s;
+}
+
+.voice-wave span:nth-child(2) {
+  animation-delay: -0.35s;
+}
+
+.voice-wave span:nth-child(3) {
+  animation-delay: -0.25s;
+}
+
+.voice-wave span:nth-child(4) {
+  animation-delay: -0.15s;
+}
+
+.voice-wave span:nth-child(5) {
+  animation-delay: -0.05s;
+}
+
+.voice-wave span:nth-child(6) {
+  animation-delay: -0.15s;
+}
+
+.voice-wave span:nth-child(7) {
+  animation-delay: -0.25s;
+}
+
+.voice-wave span:nth-child(8) {
+  animation-delay: -0.35s;
+}
+
+.voice-wave span:nth-child(9) {
+  animation-delay: -0.45s;
+}
+
+.voice-wave span:nth-child(10) {
+  animation-delay: -0.35s;
+}
+
+.voice-wave span:nth-child(11) {
+  animation-delay: -0.25s;
+}
+
+.voice-wave-idle span {
+  height: 10px;
+  animation-duration: 1.8s;
+  opacity: 0.75;
+}
+
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes voiceWave {
+  0%,
+  100% {
+    height: 10px;
+    opacity: 0.55;
+  }
+
+  50% {
+    height: 38px;
+    opacity: 1;
+  }
+}
+
+@keyframes orbGlow {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.55;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes orbRing {
+  0% {
+    transform: rotate(0deg) scale(0.98);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.02);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(0.98);
+  }
+}
+
+@keyframes speakingPulse {
+  0%,
+  100% {
+    transform: scale(1.04);
+  }
+
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-orb *,
+  .voice-orb {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
+/* ========================================
+   MOBILE
+   ======================================== */
+
+@media (max-width: 640px) {
+  .voice-orb {
+    --orb-size: 205px;
+  }
+
+  .voice-orb-ring {
+    width: 170px;
+    height: 170px;
+
+    margin-top: -85px;
+    margin-left: -85px;
+  }
+
+  .voice-orb-ring-2 {
+    width: 138px;
+    height: 138px;
+
+    margin-top: -69px;
+    margin-left: -69px;
+  }
+
+  .voice-orb-ring-3 {
+    width: 105px;
+    height: 105px;
+
+    margin-top: -52.5px;
+    margin-left: -52.5px;
+  }
+
+  .voice-orb-core {
+    width: 112px;
+    height: 112px;
+  }
+
+  .intervox-upload-panel {
+    padding: 32px 18px;
+  }
+}
