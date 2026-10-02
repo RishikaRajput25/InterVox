@@ -1,10 +1,17 @@
+
+
 # from fastapi import FastAPI
 # from fastapi.middleware.cors import CORSMiddleware
+
 # from app.api.documents import router as documents_router
+# from app.api.voice import router as voice_router
+
+
 # app = FastAPI(
 #     title="AI Research Assistant API",
 #     version="0.1.0"
 # )
+
 
 # app.add_middleware(
 #     CORSMiddleware,
@@ -13,7 +20,11 @@
 #     allow_methods=["*"],
 #     allow_headers=["*"],
 # )
+
+
 # app.include_router(documents_router)
+# app.include_router(voice_router)
+
 
 # @app.get("/")
 # async def root():
@@ -39,19 +50,18 @@
 #         reload=True,
 #     )
 
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.documents import router as documents_router
 from app.api.voice import router as voice_router
+from app.api.questions.router import router as questions_router
 
 
 app = FastAPI(
     title="AI Research Assistant API",
     version="0.1.0"
 )
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -61,9 +71,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(documents_router)
 app.include_router(voice_router)
+app.include_router(questions_router)
 
 
 @app.get("/")

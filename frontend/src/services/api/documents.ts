@@ -24,3 +24,13 @@ export async function uploadDocument(
 
   return response.data;
 }
+
+export async function getDocumentById(
+  documentId: string
+): Promise<Document> {
+  const response = await apiClient.get<Document>(
+    API_ENDPOINTS.documents.getById(documentId)
+  );
+
+  return response.data;
+}

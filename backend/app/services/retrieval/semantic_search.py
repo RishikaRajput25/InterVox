@@ -5,6 +5,7 @@ from app.services.vectorstore.chroma import get_collection
 def search_documents(
     query: str,
     top_k: int = 5,
+    document_id: str | None = None,
 ) -> list[dict]:
 
     if not query.strip():
@@ -17,10 +18,19 @@ def search_documents(
         query
     )
 
+    # Optional document filter
+    where = None
+
+    if document_id:
+        where = {
+            "document_id": document_id
+        }
+
     # Search ChromaDB
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=top_k,
+        where=where,
     )
 
     documents = results.get("documents", [[]])[0]

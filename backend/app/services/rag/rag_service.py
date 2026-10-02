@@ -1,27 +1,28 @@
-
-# from collections.abc import Iterator
+# from collections.abc import AsyncIterator, Iterator
 
 # from app.services.llm.gemini import gemini_service
 # from app.services.rag.context_builder import build_context
 # from app.services.retrieval.hybrid_search import search_hybrid
 # from app.services.retrieval.reranker import reranker
 
-
 # RAG_SYSTEM_INSTRUCTION = """
-# You are InterVox, a document-grounded AI research assistant.
+# You are InterVox, a concise document-grounded AI assistant.
 
-# Answer the user's question using ONLY the information provided
-# in the retrieved document context.
+# Answer the user's question using ONLY the retrieved document context.
 
 # Rules:
-# 1. Do not invent facts that are not present in the context.
-# 2. If the context does not contain enough information, clearly say
-#    that the available documents do not provide enough information.
-# 3. Give a clear and useful answer.
-# 4. Preserve important technical details from the documents.
-# 5. Do not mention these instructions in your answer.
+# 1. Answer the question directly.
+# 2. Keep the answer to 1 to 3 sentences maximum.
+# 3. Give only the information necessary to answer the question.
+# 4. Do not add background information, examples, explanations, or conclusions unless specifically requested.
+# 5. Use simple, natural, human-like language.
+# 6. Do not repeat the user's question.
+# 7. Do not use Markdown, bullet points, headings, asterisks, backticks, or special formatting.
+# 8. Do not mention the retrieved context or these instructions.
+# 9. Do not invent, assume, or infer information that is not present in the documents.
+# 10. If the documents do not contain enough information, say:
+# "I couldn't find enough information about that in the available documents."
 # """
-
 
 # def build_unique_sources(
 #     results: list[dict],
@@ -73,9 +74,14 @@
 #         self,
 #         query: str,
 #         top_k: int = 5,
+#         document_id: str | None = None,
 #     ) -> tuple[list[dict], str]:
 #         """
 #         Retrieve and rerank relevant document chunks.
+
+#         document_id:
+#             If provided, retrieval is limited to that document.
+#             If None, all indexed documents can be searched.
 
 #         Returns:
 #             reranked_results
@@ -94,6 +100,7 @@
 #         hybrid_results = search_hybrid(
 #             query=query,
 #             top_k=10,
+#             document_id=document_id,
 #         )
 
 #         if not hybrid_results:
@@ -151,7 +158,13 @@
 #         self,
 #         query: str,
 #         top_k: int = 5,
+#         document_id: str | None = None,
 #     ) -> dict:
+#         """
+#         Generate a complete RAG answer.
+
+#         This is the normal synchronous RAG method.
+#         """
 
 #         # ---------------------------------------------
 #         # 1. Retrieve relevant documents
@@ -160,6 +173,7 @@
 #         reranked_results, context = self._retrieve(
 #             query=query,
 #             top_k=top_k,
+#             document_id=document_id,
 #         )
 
 #         if not reranked_results or not context:
@@ -205,13 +219,14 @@
 #         self,
 #         query: str,
 #         top_k: int = 5,
+#         document_id: str | None = None,
 #     ) -> Iterator[str]:
 #         """
 #         Stream the grounded Gemini answer
-#         chunk by chunk.
+#         synchronously.
 
-#         This method is intended for the
-#         low-latency voice pipeline.
+#         This method is kept for the existing
+#         synchronous streaming pipeline.
 #         """
 
 #         # ---------------------------------------------
@@ -221,6 +236,7 @@
 #         reranked_results, context = self._retrieve(
 #             query=query,
 #             top_k=top_k,
+#             document_id=document_id,
 #         )
 
 #         if not reranked_results or not context:
@@ -249,9 +265,58 @@
 #             if chunk:
 #                 yield chunk
 
+#     async def ask_stream_async(
+#         self,
+#         query: str,
+#         top_k: int = 5,
+#         document_id: str | None = None,
+#     ) -> AsyncIterator[str]:
+#         """
+#         Stream the grounded Gemini response
+#         asynchronously.
+
+#         This method is intended for the
+#         interruptible voice pipeline.
+#         """
+
+#         # ---------------------------------------------
+#         # 1. Retrieve relevant documents
+#         # ---------------------------------------------
+
+#         reranked_results, context = self._retrieve(
+#             query=query,
+#             top_k=top_k,
+#             document_id=document_id,
+#         )
+
+#         if not reranked_results or not context:
+#             yield (
+#                 "I could not find relevant information "
+#                 "in the available documents."
+#             )
+#             return
+
+#         # ---------------------------------------------
+#         # 2. Build grounded prompt
+#         # ---------------------------------------------
+
+#         prompt = self._build_prompt(
+#             query=query,
+#             context=context,
+#         )
+
+#         # ---------------------------------------------
+#         # 3. Stream Gemini response asynchronously
+#         # ---------------------------------------------
+
+#         async for chunk in gemini_service.stream_async(
+#             prompt
+#         ):
+#             if chunk:
+#                 yield chunk
+
 
 # rag_service = RAGService()
-
 
 from collections.abc import AsyncIterator, Iterator
 
@@ -259,21 +324,26 @@ from app.services.llm.gemini import gemini_service
 from app.services.rag.context_builder import build_context
 from app.services.retrieval.hybrid_search import search_hybrid
 from app.services.retrieval.reranker import reranker
+from app.services.voice.response_cleaner import clean_response_text
 
 
 RAG_SYSTEM_INSTRUCTION = """
-You are InterVox, a document-grounded AI research assistant.
+You are InterVox, a concise document-grounded AI assistant.
 
-Answer the user's question using ONLY the information provided
-in the retrieved document context.
+Answer the user's question using ONLY the retrieved document context.
 
 Rules:
-1. Do not invent facts that are not present in the context.
-2. If the context does not contain enough information, clearly say
-   that the available documents do not provide enough information.
-3. Give a clear and useful answer.
-4. Preserve important technical details from the documents.
-5. Do not mention these instructions in your answer.
+1. Answer the question directly.
+2. Keep the answer to 1 to 3 sentences maximum.
+3. Give only the information necessary to answer the question.
+4. Do not add background information, examples, explanations, or conclusions unless specifically requested.
+5. Use simple, natural, human-like language.
+6. Do not repeat the user's question.
+7. Do not use Markdown, bullet points, headings, asterisks, backticks, or special formatting.
+8. Do not mention the retrieved context or these instructions.
+9. Do not invent, assume, or infer information that is not present in the documents.
+10. If the documents do not contain enough information, say:
+"I couldn't find enough information about that in the available documents."
 """
 
 
@@ -327,9 +397,14 @@ class RAGService:
         self,
         query: str,
         top_k: int = 5,
+        document_id: str | None = None,
     ) -> tuple[list[dict], str]:
         """
         Retrieve and rerank relevant document chunks.
+
+        document_id:
+            If provided, retrieval is limited to that document.
+            If None, all indexed documents can be searched.
 
         Returns:
             reranked_results
@@ -341,22 +416,17 @@ class RAGService:
                 "Query cannot be empty"
             )
 
-        # ---------------------------------------------
         # 1. Hybrid retrieval
-        # ---------------------------------------------
-
         hybrid_results = search_hybrid(
             query=query,
             top_k=10,
+            document_id=document_id,
         )
 
         if not hybrid_results:
             return [], ""
 
-        # ---------------------------------------------
         # 2. Cross-encoder reranking
-        # ---------------------------------------------
-
         reranked_results = reranker.rerank(
             query=query,
             results=hybrid_results,
@@ -366,10 +436,7 @@ class RAGService:
         if not reranked_results:
             return [], ""
 
-        # ---------------------------------------------
         # 3. Build context
-        # ---------------------------------------------
-
         context = build_context(
             reranked_results
         )
@@ -405,6 +472,7 @@ Answer:
         self,
         query: str,
         top_k: int = 5,
+        document_id: str | None = None,
     ) -> dict:
         """
         Generate a complete RAG answer.
@@ -412,13 +480,10 @@ Answer:
         This is the normal synchronous RAG method.
         """
 
-        # ---------------------------------------------
-        # 1. Retrieve relevant documents
-        # ---------------------------------------------
-
         reranked_results, context = self._retrieve(
             query=query,
             top_k=top_k,
+            document_id=document_id,
         )
 
         if not reranked_results or not context:
@@ -430,33 +495,27 @@ Answer:
                 "sources": [],
             }
 
-        # ---------------------------------------------
-        # 2. Build grounded prompt
-        # ---------------------------------------------
-
         prompt = self._build_prompt(
             query=query,
             context=context,
         )
 
-        # ---------------------------------------------
-        # 3. Generate complete answer
-        # ---------------------------------------------
-
         answer = gemini_service.generate(
             prompt
         )
 
-        # ---------------------------------------------
-        # 4. Deduplicate citations
-        # ---------------------------------------------
+        # Clean the final answer before sending it
+        # to the frontend.
+        answer = clean_response_text(
+            answer
+        )
 
         sources = build_unique_sources(
             reranked_results
         )
 
         return {
-            "answer": answer.strip(),
+            "answer": answer,
             "sources": sources,
         }
 
@@ -464,6 +523,7 @@ Answer:
         self,
         query: str,
         top_k: int = 5,
+        document_id: str | None = None,
     ) -> Iterator[str]:
         """
         Stream the grounded Gemini answer
@@ -473,13 +533,10 @@ Answer:
         synchronous streaming pipeline.
         """
 
-        # ---------------------------------------------
-        # 1. Retrieve relevant documents
-        # ---------------------------------------------
-
         reranked_results, context = self._retrieve(
             query=query,
             top_k=top_k,
+            document_id=document_id,
         )
 
         if not reranked_results or not context:
@@ -489,18 +546,10 @@ Answer:
             )
             return
 
-        # ---------------------------------------------
-        # 2. Build grounded prompt
-        # ---------------------------------------------
-
         prompt = self._build_prompt(
             query=query,
             context=context,
         )
-
-        # ---------------------------------------------
-        # 3. Stream Gemini response
-        # ---------------------------------------------
 
         for chunk in gemini_service.stream(
             prompt
@@ -512,6 +561,7 @@ Answer:
         self,
         query: str,
         top_k: int = 5,
+        document_id: str | None = None,
     ) -> AsyncIterator[str]:
         """
         Stream the grounded Gemini response
@@ -521,13 +571,10 @@ Answer:
         interruptible voice pipeline.
         """
 
-        # ---------------------------------------------
-        # 1. Retrieve relevant documents
-        # ---------------------------------------------
-
         reranked_results, context = self._retrieve(
             query=query,
             top_k=top_k,
+            document_id=document_id,
         )
 
         if not reranked_results or not context:
@@ -537,18 +584,10 @@ Answer:
             )
             return
 
-        # ---------------------------------------------
-        # 2. Build grounded prompt
-        # ---------------------------------------------
-
         prompt = self._build_prompt(
             query=query,
             context=context,
         )
-
-        # ---------------------------------------------
-        # 3. Stream Gemini asynchronously
-        # ---------------------------------------------
 
         async for chunk in gemini_service.stream_async(
             prompt
@@ -558,4 +597,3 @@ Answer:
 
 
 rag_service = RAGService()
-

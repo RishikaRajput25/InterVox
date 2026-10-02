@@ -1,52 +1,106 @@
+# import asyncio
+# from collections.abc import AsyncIterator
+
+# from app.services.rag.rag_service import rag_service
+# from app.services.tts.edge_tts_service import edge_tts_service
+
+
+# class VoiceResponseService:
+#     """
+#     Connects the streaming RAG response to TTS.
+
+#     Pipeline:
+
+#     User transcript
+#         ↓
+#     RAG + Gemini streaming
+#         ↓
+#     Sentence buffering
+#         ↓
+#     Edge TTS
+#         ↓
+#     Audio chunks
+
+#     The complete pipeline is cancellable.
+#     If the current voice turn is cancelled,
+#     Gemini/RAG/TTS processing stops.
+#     """
+
+#     async def stream_audio(
+#         self,
+#         transcript: str,
+#     ) -> AsyncIterator[bytes]:
+#         """
+#         Generate streaming audio for a user transcript.
+
+#         Cancellation is allowed to propagate through
+#         the complete RAG → TTS pipeline.
+#         """
+
+#         if not transcript.strip():
+#             return
+
+#         text_stream = rag_service.ask_stream_async(
+#             query=transcript
+#         )
+
+#         try:
+#             async for audio_chunk in edge_tts_service.stream(
+#                 text_stream
+#             ):
+#                 if audio_chunk:
+#                     yield audio_chunk
+
+#         except asyncio.CancelledError:
+#             print(
+#                 "Voice response pipeline cancelled."
+#             )
+#             raise
+
+
+# voice_response_service = VoiceResponseService()
+
 import asyncio
 from collections.abc import AsyncIterator
 
 from app.services.rag.rag_service import rag_service
-from app.services.tts.edge_tts_service import edge_tts_service
+from app.services.voice.response_cleaner import (
+    clean_response_text,
+)
+from app.services.tts.edge_tts_service import (
+    edge_tts_service,
+)
 
 
 class VoiceResponseService:
-    """
-    Connects the streaming RAG response to TTS.
-
-    Pipeline:
-
-    User transcript
-        ↓
-    RAG + Gemini streaming
-        ↓
-    Sentence buffering
-        ↓
-    Edge TTS
-        ↓
-    Audio chunks
-
-    The complete pipeline is cancellable.
-    If the current voice turn is cancelled,
-    Gemini/RAG/TTS processing stops.
-    """
-
     async def stream_audio(
         self,
         transcript: str,
     ) -> AsyncIterator[bytes]:
-        """
-        Generate streaming audio for a user transcript.
-
-        Cancellation is allowed to propagate through
-        the complete RAG → TTS pipeline.
-        """
 
         if not transcript.strip():
             return
 
-        text_stream = rag_service.ask_stream_async(
+        # Collect the short streamed RAG answer.
+        answer_parts: list[str] = []
+
+        async for chunk in rag_service.ask_stream_async(
             query=transcript
-        )
+        ):
+            if chunk:
+                answer_parts.append(chunk)
+
+        answer = "".join(answer_parts)
+
+        # Final TTS-safe cleanup.
+        answer = clean_response_text(answer)
+
+        if not answer:
+            return
 
         try:
             async for audio_chunk in edge_tts_service.stream(
-                text_stream
+                self._single_text_stream(answer)
             ):
                 if audio_chunk:
                     yield audio_chunk
@@ -56,6 +110,13 @@ class VoiceResponseService:
                 "Voice response pipeline cancelled."
             )
             raise
+
+    async def _single_text_stream(
+        self,
+        text: str,
+    ) -> AsyncIterator[str]:
+
+        yield text
 
 
 voice_response_service = VoiceResponseService()

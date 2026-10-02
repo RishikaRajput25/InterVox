@@ -44,6 +44,7 @@ def calculate_keyword_score(
 def search_by_keyword(
     query: str,
     top_k: int = 5,
+    document_id: str | None = None,
 ) -> list[dict]:
 
     if not query.strip():
@@ -51,8 +52,17 @@ def search_by_keyword(
 
     collection = get_collection()
 
-    # Get all indexed chunks.
+    # Optional document filter
+    where = None
+
+    if document_id:
+        where = {
+            "document_id": document_id
+        }
+
+    # Get indexed chunks.
     results = collection.get(
+        where=where,
         include=[
             "documents",
             "metadatas",

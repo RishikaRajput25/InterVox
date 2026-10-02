@@ -20,6 +20,7 @@ def normalize_semantic_score(distance: float) -> float:
 def search_hybrid(
     query: str,
     top_k: int = 5,
+    document_id: str | None = None,
 ) -> list[dict]:
 
     if not query.strip():
@@ -32,6 +33,7 @@ def search_hybrid(
     semantic_results = search_documents(
         query=query,
         top_k=top_k,
+        document_id=document_id,
     )
 
     # --------------------------------------------------
@@ -41,6 +43,7 @@ def search_hybrid(
     keyword_results = search_by_keyword(
         query=query,
         top_k=top_k,
+        document_id=document_id,
     )
 
     # --------------------------------------------------
